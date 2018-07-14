@@ -24,7 +24,7 @@ function ItemDAO(database) {
 
     this.db = database;
 
-    this.getCategories = function(callback) {
+    this.getCategories = async function (callback) {
         "use strict";
 
         /*
@@ -52,21 +52,42 @@ function ItemDAO(database) {
         *
         */
 
-        var categories = [];
-        var category = {
-            _id: "All",
-            num: 9999
-        };
-
-        categories.push(category)
-
         // TODO-lab1A Replace all code above (in this method).
 
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the categories array to the
-        // callback.
-        callback(categories);
-    }
+        function queryCollection(callback){
+            var aggregation = [
+                {
+                    $group:
+                        {
+                            _id: "$category",
+                            num: {$sum: 1}
+                        }
+                }
+            ];
+            database.collection('item').aggregate(aggregation).toArray(function(err, result) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    callback(result);
+                }
+            });
+        }
+
+        queryCollection(function(categories){
+            let sum = 0;
+            for (let i = 0; i < categories.length; i++) {
+                sum += categories[i].num;
+            }
+            let all = {
+                _id: "All",
+                num: sum
+            };
+            categories.push(all);
+            categories.sort((a, b) => a._id.localeCompare(b._id));
+            callback(categories);
+        });
+
+    };
 
 
     this.getItems = function(category, page, itemsPerPage, callback) {

@@ -25,7 +25,7 @@ var express = require('express'),
     
 
 // Set up express
-app = express();
+let app = express();
 app.set('view engine', 'html');
 app.set('views', __dirname + '/views');
 app.use('/static', express.static(__dirname + '/static'));
