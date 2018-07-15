@@ -54,43 +54,37 @@ function ItemDAO(database) {
 
         // TODO-lab1A Replace all code above (in this method).
 
-        function queryCollection(callback){
-            var aggregation = [
-                {
-                    $group:
-                        {
-                            _id: "$category",
-                            num: {$sum: 1}
-                        }
-                }
-            ];
-            database.collection('item').aggregate(aggregation).toArray(function(err, result) {
-                if (err) {
-                    console.log(err);
-                } else {
-                    callback(result);
-                }
-            });
-        }
-
-        queryCollection(function(categories){
-            let sum = 0;
-            for (let i = 0; i < categories.length; i++) {
-                sum += categories[i].num;
+        let aggregation = [
+            {
+                $group:
+                    {
+                        _id: "$category",
+                        num: {$sum: 1}
+                    }
             }
-            let all = {
-                _id: "All",
-                num: sum
-            };
-            categories.push(all);
-            categories.sort((a, b) => a._id.localeCompare(b._id));
-            callback(categories);
+        ];
+        database.collection('item').aggregate(aggregation).toArray(function (err, categories) {
+            if (err) {
+                console.log(err);
+            } else {
+                let sum = 0;
+                for (let i = 0; i < categories.length; i++) {
+                    sum += categories[i].num;
+                }
+                let all = {
+                    _id: "All",
+                    num: sum
+                };
+                categories.push(all);
+                categories.sort((a, b) => a._id.localeCompare(b._id));
+                callback(categories);
+            }
         });
 
     };
 
 
-    this.getItems = function(category, page, itemsPerPage, callback) {
+    this.getItems = function (category, page, itemsPerPage, callback) {
         "use strict";
 
         /*
@@ -115,22 +109,35 @@ function ItemDAO(database) {
          *
          */
 
-        var pageItem = this.createDummyItem();
-        var pageItems = [];
-        for (var i=0; i<5; i++) {
-            pageItems.push(pageItem);
+        let query = {};
+        if (category !== 'All'){
+            query = {
+                category: category
+            };
         }
+
+        let sort = {
+            _id: 1
+        };
+        let skip = page * itemsPerPage;
+        database.collection('item').find(query).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(pageItems);
+            }
+        });
+
 
         // TODO-lab1B Replace all code above (in this method).
 
         // TODO Include the following line in the appropriate
         // place within your code to pass the items for the selected page
         // to the callback.
-        callback(pageItems);
-    }
+    };
 
 
-    this.getNumItems = function(category, callback) {
+    this.getNumItems = function (category, callback) {
         "use strict";
 
         var numItems = 0;
@@ -150,13 +157,13 @@ function ItemDAO(database) {
          *
          */
 
-         // TODO Include the following line in the appropriate
-         // place within your code to pass the count to the callback.
+        // TODO Include the following line in the appropriate
+        // place within your code to pass the count to the callback.
         callback(numItems);
     }
 
 
-    this.searchItems = function(query, page, itemsPerPage, callback) {
+    this.searchItems = function (query, page, itemsPerPage, callback) {
         "use strict";
 
         /*
@@ -185,7 +192,7 @@ function ItemDAO(database) {
 
         var item = this.createDummyItem();
         var items = [];
-        for (var i=0; i<5; i++) {
+        for (var i = 0; i < 5; i++) {
             items.push(item);
         }
 
@@ -198,7 +205,7 @@ function ItemDAO(database) {
     }
 
 
-    this.getNumSearchItems = function(query, callback) {
+    this.getNumSearchItems = function (query, callback) {
         "use strict";
 
         var numItems = 0;
@@ -220,7 +227,7 @@ function ItemDAO(database) {
     }
 
 
-    this.getItem = function(itemId, callback) {
+    this.getItem = function (itemId, callback) {
         "use strict";
 
         /*
@@ -244,19 +251,19 @@ function ItemDAO(database) {
     }
 
 
-    this.getRelatedItems = function(callback) {
+    this.getRelatedItems = function (callback) {
         "use strict";
 
         this.db.collection("item").find({})
             .limit(4)
-            .toArray(function(err, relatedItems) {
+            .toArray(function (err, relatedItems) {
                 assert.equal(null, err);
                 callback(relatedItems);
             });
     };
 
 
-    this.addReview = function(itemId, comment, name, stars, callback) {
+    this.addReview = function (itemId, comment, name, stars, callback) {
         "use strict";
 
         /*
@@ -290,7 +297,7 @@ function ItemDAO(database) {
     }
 
 
-    this.createDummyItem = function() {
+    this.createDummyItem = function () {
         "use strict";
 
         var item = {
