@@ -54,7 +54,7 @@ function ItemDAO(database) {
 
         // TODO-lab1A Replace all code above (in this method).
 
-        let aggregation = [
+        const aggregation = [
             {
                 $group:
                     {
@@ -63,7 +63,7 @@ function ItemDAO(database) {
                     }
             }
         ];
-        database.collection('item').aggregate(aggregation).toArray(function (err, categories) {
+        this.db.collection('item').aggregate(aggregation).toArray(function (err, categories) {
             if (err) {
                 console.log(err);
             } else {
@@ -115,12 +115,11 @@ function ItemDAO(database) {
                 category: category
             };
         }
-
-        let sort = {
+        const sort = {
             _id: 1
         };
-        let skip = page * itemsPerPage;
-        database.collection('item').find(query).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
+        const skip = page * itemsPerPage;
+        this.db.collection('item').find(query).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
             if (err) {
                 console.log(err);
             } else {
@@ -140,7 +139,6 @@ function ItemDAO(database) {
     this.getNumItems = function (category, callback) {
         "use strict";
 
-        var numItems = 0;
 
         /*
          * TODO-lab1C:
@@ -157,10 +155,21 @@ function ItemDAO(database) {
          *
          */
 
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the count to the callback.
-        callback(numItems);
-    }
+        let query = {};
+        if (category !== 'All'){
+            query = {
+                category: category
+            };
+        }
+        this.db.collection('item').find(query).count(function (err, numItems) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(numItems);
+            }
+        });
+
+    };
 
 
     this.searchItems = function (query, page, itemsPerPage, callback) {
