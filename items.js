@@ -110,7 +110,7 @@ function ItemDAO(database) {
          */
 
         let query = {};
-        if (category !== 'All'){
+        if (category !== 'All') {
             query = {
                 category: category
             };
@@ -156,7 +156,7 @@ function ItemDAO(database) {
          */
 
         let query = {};
-        if (category !== 'All'){
+        if (category !== 'All') {
             query = {
                 category: category
             };
@@ -232,7 +232,7 @@ function ItemDAO(database) {
         // TODO Include the following line in the appropriate
         // place within your code to pass the items for the selected page
         // of search results to the callback.
-    }
+    };
 
 
     this.getNumSearchItems = function (query, callback) {
@@ -278,15 +278,17 @@ function ItemDAO(database) {
          *
          */
 
-        var item = this.createDummyItem();
-
-        // TODO-lab3 Replace all code above (in this method).
-
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the matching item
-        // to the callback.
-        callback(item);
-    }
+        const query = {
+            _id: itemId
+        };
+        this.db.collection('item').find(query).limit(1).next(function (err, item) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(item);
+            }
+        });
+    };
 
 
     this.getRelatedItems = function (callback) {
