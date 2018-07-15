@@ -199,25 +199,45 @@ function ItemDAO(database) {
          *
          */
 
-        var item = this.createDummyItem();
-        var items = [];
-        for (var i = 0; i < 5; i++) {
-            items.push(item);
-        }
+        /* Index created on Mongo Shell
+
+        db.item.createIndex(
+            {
+                title: "text",
+                slogan: "text",
+                description: "text"
+            }
+        );
+
+        */
+
+
+        const find = {
+            $text: {$search: query}
+        };
+        const sort = {
+            _id: 1
+        };
+        const skip = page * itemsPerPage;
+        this.db.collection('item').find(find).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(pageItems);
+            }
+        });
 
         // TODO-lab2A Replace all code above (in this method).
 
         // TODO Include the following line in the appropriate
         // place within your code to pass the items for the selected page
         // of search results to the callback.
-        callback(items);
     }
 
 
     this.getNumSearchItems = function (query, callback) {
         "use strict";
 
-        var numItems = 0;
 
         /*
         * TODO-lab2B
@@ -231,9 +251,18 @@ function ItemDAO(database) {
         * a SINGLE text index on title, slogan, and description. You should
         * simply do this in the mongo shell.
         */
+        const find = {
+            $text: {$search: query}
+        };
+        this.db.collection('item').find(find).count(function (err, numItems) {
+            if (err) {
+                console.log(err);
+            } else {
+                callback(numItems);
+            }
+        });
 
-        callback(numItems);
-    }
+    };
 
 
     this.getItem = function (itemId, callback) {
