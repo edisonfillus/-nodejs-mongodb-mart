@@ -63,10 +63,9 @@ function ItemDAO(database) {
                     }
             }
         ];
-        this.db.collection('item').aggregate(aggregation).toArray(function (err, categories) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').aggregate(aggregation)
+            .toArray(function (err, categories) {
+                assert.equal(null, err);
                 let sum = 0;
                 for (let i = 0; i < categories.length; i++) {
                     sum += categories[i].num;
@@ -78,9 +77,7 @@ function ItemDAO(database) {
                 categories.push(all);
                 categories.sort((a, b) => a._id.localeCompare(b._id));
                 callback(categories);
-            }
-        });
-
+            })
     };
 
 
@@ -119,13 +116,14 @@ function ItemDAO(database) {
             _id: 1
         };
         const skip = page * itemsPerPage;
-        this.db.collection('item').find(query).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').find(query)
+            .sort(sort)
+            .limit(itemsPerPage)
+            .skip(skip)
+            .toArray(function (err, pageItems) {
+                assert.equal(null, err);
                 callback(pageItems);
-            }
-        });
+            });
 
 
         // TODO-lab1B Replace all code above (in this method).
@@ -161,13 +159,11 @@ function ItemDAO(database) {
                 category: category
             };
         }
-        this.db.collection('item').find(query).count(function (err, numItems) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').find(query)
+            .count(function (err, numItems) {
+                assert.equal(null, err);
                 callback(numItems);
-            }
-        });
+            });
 
     };
 
@@ -219,13 +215,14 @@ function ItemDAO(database) {
             _id: 1
         };
         const skip = page * itemsPerPage;
-        this.db.collection('item').find(find).sort(sort).limit(itemsPerPage).skip(skip).toArray(function (err, pageItems) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').find(find)
+            .sort(sort)
+            .limit(itemsPerPage)
+            .skip(skip)
+            .toArray(function (err, pageItems) {
+                assert.equal(null, err);
                 callback(pageItems);
-            }
-        });
+            });
 
         // TODO-lab2A Replace all code above (in this method).
 
@@ -254,13 +251,11 @@ function ItemDAO(database) {
         const find = {
             $text: {$search: query}
         };
-        this.db.collection('item').find(find).count(function (err, numItems) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').find(find)
+            .count(function (err, numItems) {
+                assert.equal(null, err);
                 callback(numItems);
-            }
-        });
+            });
 
     };
 
@@ -281,26 +276,36 @@ function ItemDAO(database) {
         const query = {
             _id: itemId
         };
-        this.db.collection('item').find(query).limit(1).next(function (err, item) {
-            if (err) {
-                console.log(err);
-            } else {
+        this.db.collection('item').find(query)
+            .limit(1)
+            .next(function (err, item) {
+                assert.equal(null, err);
                 callback(item);
-            }
-        });
+            });
     };
 
 
-    this.getRelatedItems = function (callback) {
+    this.getRelatedItems = function (item, callback) {
         "use strict";
 
-        this.db.collection("item").find({})
+        const find = {
+            $text: {$search: item.title + ' ' + item.description},
+            _id : {$ne:item._id}
+        };
+        const project = {
+            score: {$meta: 'textScore'}
+        };
+        const sort = {
+            score: {$meta: 'textScore'}
+        };
+        this.db.collection("item").find(find,project).sort(sort)
             .limit(4)
             .toArray(function (err, relatedItems) {
                 assert.equal(null, err);
                 callback(relatedItems);
             });
-    };
+    }
+    ;
 
 
     this.addReview = function (itemId, comment, name, stars, callback) {
@@ -318,42 +323,29 @@ function ItemDAO(database) {
          *
          */
 
-        var reviewDoc = {
+        const reviewDoc = {
             name: name,
             comment: comment,
             stars: stars,
             date: Date.now()
-        }
-
-        // TODO replace the following two lines with your code that will
-        // update the document with a new review.
-        var doc = this.createDummyItem();
-        doc.reviews = [reviewDoc];
-
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the updated doc to the
-        // callback.
-        callback(doc);
-    }
-
-
-    this.createDummyItem = function () {
-        "use strict";
-
-        var item = {
-            _id: 1,
-            title: "Gray Hooded Sweatshirt",
-            description: "The top hooded sweatshirt we offer",
-            slogan: "Made of 100% cotton",
-            stars: 0,
-            category: "Apparel",
-            img_url: "/img/products/hoodie.jpg",
-            price: 29.99,
-            reviews: []
         };
 
-        return item;
-    }
+
+        const match = {
+            _id: itemId
+        };
+
+        const update = {
+            $push: {reviews: reviewDoc}
+        };
+
+        this.db.collection('item').updateOne(match, update, function (err, result) {
+            assert.equal(null, err);
+            callback(result);
+        });
+
+    };
+
 }
 
 

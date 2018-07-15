@@ -152,7 +152,7 @@ MongoClient.connect('mongodb://localhost:27017/mongomart', function(err, db) {
                 }
             }
 
-            items.getRelatedItems(function(relatedItems) {
+            items.getRelatedItems(item,function(relatedItems) {
 
                 console.log(relatedItems);
                 res.render("item",
