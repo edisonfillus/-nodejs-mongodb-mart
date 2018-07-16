@@ -25,7 +25,7 @@ function CartDAO(database) {
     this.db = database;
 
 
-    this.getCart = function(userId, callback) {
+    this.getCart = function (userId, callback) {
         "use strict";
 
         /*
@@ -38,23 +38,25 @@ function CartDAO(database) {
         *
         */
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        userCart.items.push(dummyItem);
+        const query = {
+            userId: userId
+        };
+        this.db.collection('cart').find(query)
+            .limit(1)
+            .next(function (err, userCart) {
+                assert.equal(null, err);
+                callback(userCart);
+            });
 
         // TODO-lab5 Replace all code above (in this method).
 
         // TODO Include the following line in the appropriate
         // place within your code to pass the userCart to the
         // callback.
-        callback(userCart);
-    }
+    };
 
 
-    this.itemInCart = function(userId, itemId, callback) {
+    this.itemInCart = function (userId, itemId, callback) {
         "use strict";
 
         /*
@@ -82,10 +84,27 @@ function CartDAO(database) {
          *
          */
 
-        callback(null);
+
+        const query = {
+            userId: userId,
+            "items._id": itemId
+        };
+        const project = {
+            "items.$": 1
+        };
+        this.db.collection('cart').find(query, project)
+            .limit(1)
+            .next(function (err, cart) {
+                assert.equal(null, err);
+                if (cart == null) {
+                    callback(null);
+                } else {
+                    callback(cart.items[0]);
+                }
+            });
 
         // TODO-lab6 Replace all code above (in this method).
-    }
+    };
 
 
     /*
@@ -106,7 +125,7 @@ function CartDAO(database) {
      * http://mongodb.github.io/node-mongodb-native/2.0/api/Collection.html#findOneAndUpdate
      *
      */
-    this.addItem = function(userId, item, callback) {
+    this.addItem = function (userId, item, callback) {
         "use strict";
 
         // Will update the first document found matching the query document.
@@ -127,7 +146,7 @@ function CartDAO(database) {
             },
             // Because we specified "returnOriginal: false", this callback
             // will be passed the updated document as the value of result.
-            function(err, result) {
+            function (err, result) {
                 assert.equal(null, err);
                 // To get the actual document updated we need to access the
                 // value field of the result.
@@ -154,7 +173,7 @@ function CartDAO(database) {
     };
 
 
-    this.updateQuantity = function(userId, itemId, quantity, callback) {
+    this.updateQuantity = function (userId, itemId, quantity, callback) {
         "use strict";
 
         /*
@@ -174,36 +193,31 @@ function CartDAO(database) {
         *
         */
 
-        var userCart = {
+        const query = {
             userId: userId,
-            items: []
+            "items._id": itemId
+        };
+        let update = {};
+        if (quantity === 0) {
+            update = {
+                $pull: {"items":{_id: itemId}}  // Remove item
+            };
+        } else {
+            update = {
+                $set: {"items.$.quantity": quantity}  // Update quantity
+            };
         }
-        var dummyItem = this.createDummyItem();
-        dummyItem.quantity = quantity;
-        userCart.items.push(dummyItem);
-        callback(userCart);
+        this.db.collection("cart").findOneAndUpdate(query, update,
+            {
+                returnOriginal: false
+            },
+            function (err, result) {
+                assert.equal(null, err);
+                callback(result.value);
+            });
 
         // TODO-lab7 Replace all code above (in this method).
 
-    }
-
-    this.createDummyItem = function() {
-        "use strict";
-
-        var item = {
-            _id: 1,
-            title: "Gray Hooded Sweatshirt",
-            description: "The top hooded sweatshirt we offer",
-            slogan: "Made of 100% cotton",
-            stars: 0,
-            category: "Apparel",
-            img_url: "/img/products/hoodie.jpg",
-            price: 29.99,
-            quantity: 1,
-            reviews: []
-        };
-
-        return item;
     }
 
 }
